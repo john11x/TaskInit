@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fff4e0">
+    <title>Daily Sales Log</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="ticker" aria-label="Today's sales ticker">
+      <div class="ticker-track" id="ticker-track" aria-live="off"></div>
+    </div>
+
+    <main class="page-shell">
+      <header class="masthead">
+        <a class="wordmark" href="index.html" aria-label="Daily Sales Log home">DAILY<span>!</span></a>
+        <p class="date-label" id="today-label">YOUR SHOP. YOUR NUMBERS.</p>
+      </header>
+
+      <section class="total-card" aria-labelledby="total-heading">
+        <div class="total-copy">
+          <p class="eyebrow" id="total-heading">SOLD TODAY</p>
+          <p class="total-amount"><span class="currency-mark" data-currency></span><span id="total-value">0.00</span></p>
+        </div>
+        <p class="sale-count" id="sale-count">0 SALES</p>
+        <span class="total-spark" aria-hidden="true">✦</span>
+      </section>
+
+      <div class="work-area">
+        <section class="panel form-panel" aria-labelledby="form-heading">
+          <div class="panel-heading">
+            <span class="section-mark mark-red" aria-hidden="true">01</span>
+            <h1 id="form-heading">Log a sale</h1>
+          </div>
+          <form id="sale-form" novalidate>
+            <div class="field-group">
+              <label for="item-name">WHAT SOLD?</label>
+              <input id="item-name" name="item_name" type="text" maxlength="120" autocomplete="off" placeholder="e.g. Indomie carton" aria-describedby="item-error">
+              <p class="field-error" id="item-error"></p>
+              <div class="quick-add" id="quick-add" aria-label="Recently sold items"></div>
+            </div>
+
+            <div class="field-group">
+              <label for="amount">HOW MUCH?</label>
+              <div class="amount-input-wrap">
+                <span id="amount-currency" data-currency aria-hidden="true"></span>
+                <input id="amount" name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="amount-error">
+              </div>
+              <p class="field-error" id="amount-error"></p>
+            </div>
+
+            <div class="field-group">
+              <label for="sold-at">WHEN?</label>
+              <input id="sold-at" name="sold_at" type="datetime-local" step="60" aria-describedby="time-error">
+              <p class="field-error" id="time-error"></p>
+            </div>
+
+            <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+            <button class="save-button" id="save-sale" type="submit">LOG SALE <span aria-hidden="true">↗</span></button>
+          </form>
+          <div class="stamp-layer" id="stamp-layer" aria-hidden="true">
+            <span class="ink-splat"></span>
+            <span class="sold-stamp">SOLD <b>✓</b></span>
+          </div>
+        </section>
+
+        <section class="panel ledger-panel" aria-labelledby="ledger-heading">
+          <div class="panel-heading ledger-heading">
+            <span class="section-mark mark-blue" aria-hidden="true">02</span>
+            <h2 id="ledger-heading">Today's sales</h2>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">TIME</th>
+                  <th scope="col">ITEM</th>
+                  <th scope="col">AMOUNT</th>
+                  <th scope="col">RUNNING</th>
+                </tr>
+              </thead>
+              <tbody id="sales-body"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="empty-state">No sales yet. Go sell something.</p>
+        </section>
+      </div>
+
+      <footer class="page-footer"><span>ONE SALE AT A TIME.</span><span>MADE FOR THE COUNTER</span></footer>
+    </main>
+  </body>
+</html>
