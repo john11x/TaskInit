@@ -24,6 +24,12 @@ docs/PRD.md                Product requirements and manual verification data
 
 5. Open [http://localhost:8000](http://localhost:8000) and log sales through the form.
 
+## Netlify deployment
+
+1. In Netlify, import this GitHub repository and set `main` as the production branch.
+2. Leave the build command empty. `netlify.toml` publishes the existing `frontend/` folder, so no `dist/` build is needed.
+3. Deploy the site once. After that, each push to `main` triggers a new production deploy and replaces the live site. Previous deploys remain available in Netlify's deploy history.
+
 This app uses the browser-safe publishable/anon key. Never put a `service_role` or secret key in frontend code. The migrations deliberately allow anonymous reads and inserts, and the second migration allows anonymous deletes. Anyone with access to this demo can read, add, or delete its sales, so do not use real shop data.
 
 ## Notes
