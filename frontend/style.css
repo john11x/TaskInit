@@ -501,8 +501,8 @@ input[aria-invalid="true"] {
 }
 
 table {
-  width: min(100%, 600px);
-  min-width: 550px;
+  width: 100%;
+  min-width: 600px;
   table-layout: fixed;
   border-collapse: collapse;
   font-family: "DM Mono", "JetBrains Mono", monospace;
@@ -522,27 +522,27 @@ th {
 
 th:nth-child(1),
 td:nth-child(1) {
-  width: 80px;
+  width: 12%;
 }
 
 th:nth-child(2),
 td:nth-child(2) {
-  width: 150px;
+  width: 25%;
 }
 
 th:nth-child(3),
 td:nth-child(3) {
-  width: 125px;
+  width: 21%;
 }
 
 th:nth-child(4),
 td:nth-child(4) {
-  width: 140px;
+  width: 28%;
 }
 
 th:nth-child(5),
 td:nth-child(5) {
-  width: 55px;
+  width: 14%;
 }
 
 th:nth-child(3),
@@ -581,7 +581,6 @@ tbody tr:last-child td {
 }
 
 .action-cell {
-  width: 52px;
   text-align: center;
 }
 
