@@ -527,7 +527,7 @@ td:nth-child(1) {
 
 th:nth-child(2),
 td:nth-child(2) {
-  width: 25%;
+  width: 23%;
 }
 
 th:nth-child(3),
@@ -542,11 +542,16 @@ td:nth-child(4) {
 
 th:nth-child(5),
 td:nth-child(5) {
-  width: 14%;
+  width: 16%;
 }
 
 th:nth-child(3),
 th:nth-child(4) {
+  text-align: right;
+}
+
+th:nth-child(5) {
+  padding-right: 20px;
   text-align: right;
 }
 
@@ -581,13 +586,15 @@ tbody tr:last-child td {
 }
 
 .action-cell {
-  text-align: center;
+  padding-left: 20px;
+  text-align: right;
 }
 
 .delete-sale {
   display: grid;
   width: 38px;
   height: 38px;
+  margin-left: auto;
   place-items: center;
   border: 2px solid var(--ink);
   border-radius: 0;
