@@ -93,7 +93,7 @@ input {
 .wordmark {
   color: var(--ink);
   font-family: "Bricolage Grotesque", sans-serif;
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1;
   text-decoration: none;
@@ -131,8 +131,10 @@ th {
   position: relative;
   display: flex;
   min-height: 178px;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
+  row-gap: 12px;
   overflow: hidden;
   padding: 22px 26px;
   background: var(--paper);
@@ -141,7 +143,47 @@ th {
 .total-copy {
   position: relative;
   z-index: 1;
+  flex: 1 0 100%;
   min-width: 0;
+}
+
+.total-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 0 auto;
+}
+
+.copy-total {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 7px;
+  margin-top: 0;
+  padding: 6px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--red);
+  box-shadow: 2px 2px 0 var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+}
+
+.copy-total:hover {
+  background: var(--yellow);
+}
+
+.copy-total:active {
+  box-shadow: 0 0 0 var(--ink);
+  transform: translate(2px, 2px);
 }
 
 .eyebrow {
@@ -155,7 +197,7 @@ th {
   gap: 5px;
   margin: 0;
   font-family: "DM Mono", "JetBrains Mono", monospace;
-  font-size: 39px;
+  font-size: 34px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--green-ink);
@@ -179,7 +221,7 @@ th {
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  margin: 0 2px 0 16px;
+  margin: 0;
   padding: 10px 12px;
   border: 2px solid var(--ink);
   background: var(--yellow);
@@ -223,6 +265,66 @@ th {
   margin: 0;
   font-size: 24px;
   line-height: 1.05;
+}
+
+.ledger-heading {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.date-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.date-controls #dashboard-date {
+  width: 154px;
+  min-height: 40px;
+  padding: 6px 8px;
+  font-family: "DM Mono", "JetBrains Mono", monospace;
+  font-size: 13px;
+}
+
+.day-step {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--yellow);
+  box-shadow: 2px 2px 0 var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.day-step:hover:not(:disabled) {
+  background: var(--blue);
+}
+
+.day-step:active:not(:disabled) {
+  box-shadow: 0 0 0 var(--ink);
+  transform: translate(2px, 2px);
+}
+
+.day-step:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 .section-mark {
@@ -399,8 +501,9 @@ input[aria-invalid="true"] {
 }
 
 table {
-  width: 100%;
-  min-width: 500px;
+  width: min(100%, 600px);
+  min-width: 550px;
+  table-layout: fixed;
   border-collapse: collapse;
   font-family: "DM Mono", "JetBrains Mono", monospace;
   font-size: 13px;
@@ -415,6 +518,36 @@ th {
   font-size: 11px;
   text-align: left;
   white-space: nowrap;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 80px;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 150px;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+  width: 125px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 140px;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+  width: 55px;
+}
+
+th:nth-child(3),
+th:nth-child(4) {
+  text-align: right;
 }
 
 td {
@@ -432,7 +565,7 @@ tbody tr:last-child td {
 }
 
 .sale-item {
-  min-width: 112px;
+  overflow-wrap: anywhere;
   font-family: "DM Sans", sans-serif;
   font-weight: 700;
 }
@@ -445,6 +578,36 @@ tbody tr:last-child td {
 
 .running-total {
   font-weight: 500;
+}
+
+.action-cell {
+  width: 52px;
+  text-align: center;
+}
+
+.delete-sale {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--red);
+  box-shadow: 2px 2px 0 var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 25px;
+  line-height: 1;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+}
+
+.delete-sale:hover {
+  background: var(--yellow);
+}
+
+.delete-sale:active {
+  box-shadow: 0 0 0 var(--ink);
+  transform: translate(2px, 2px);
 }
 
 .new-tag {
@@ -558,7 +721,17 @@ tbody tr:last-child td {
 
   .total-card {
     min-height: 208px;
+    flex-wrap: nowrap;
+    align-items: center;
     padding: 28px 34px;
+  }
+
+  .total-copy {
+    flex: 1 1 auto;
+  }
+
+  .total-actions {
+    margin-left: 12px;
   }
 
   .total-amount {

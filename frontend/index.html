@@ -19,7 +19,7 @@
 
     <main class="page-shell">
       <header class="masthead">
-        <a class="wordmark" href="index.html" aria-label="Daily Sales Log home">DAILY<span>!</span></a>
+        <a class="wordmark" href="index.html" aria-label="Daily Sales Log home">Daily Sales Log</a>
         <p class="date-label" id="today-label">YOUR SHOP. YOUR NUMBERS.</p>
       </header>
 
@@ -28,7 +28,10 @@
           <p class="eyebrow" id="total-heading">SOLD TODAY</p>
           <p class="total-amount"><span class="currency-mark" data-currency></span><span id="total-value">0.00</span></p>
         </div>
-        <p class="sale-count" id="sale-count">0 SALES</p>
+        <div class="total-actions">
+          <p class="sale-count" id="sale-count">0 SALES</p>
+          <button class="copy-total" id="copy-total" type="button"><span aria-hidden="true">▣</span> COPY TOTAL</button>
+        </div>
         <span class="total-spark" aria-hidden="true">✦</span>
       </section>
 
@@ -74,6 +77,12 @@
           <div class="panel-heading ledger-heading">
             <span class="section-mark mark-blue" aria-hidden="true">02</span>
             <h2 id="ledger-heading">Today's sales</h2>
+            <div class="date-controls" aria-label="Choose dashboard date">
+              <button class="day-step" id="previous-day" type="button" aria-label="Previous day" title="Previous day">←</button>
+              <label class="visually-hidden" for="dashboard-date">Dashboard date</label>
+              <input id="dashboard-date" type="date" aria-label="Dashboard date">
+              <button class="day-step" id="next-day" type="button" aria-label="Next day" title="Next day">→</button>
+            </div>
           </div>
           <div class="table-scroll">
             <table>
@@ -83,6 +92,7 @@
                   <th scope="col">ITEM</th>
                   <th scope="col">AMOUNT</th>
                   <th scope="col">RUNNING</th>
+                  <th scope="col">ACTION</th>
                 </tr>
               </thead>
               <tbody id="sales-body"></tbody>
@@ -92,7 +102,7 @@
         </section>
       </div>
 
-      <footer class="page-footer"><span>ONE SALE AT A TIME.</span><span>MADE FOR THE COUNTER</span></footer>
+      <footer class="page-footer"><span>ONE SALE AT A TIME.</span><span>YOUR SHOP. YOUR NUMBERS.</span></footer>
     </main>
   </body>
 </html>

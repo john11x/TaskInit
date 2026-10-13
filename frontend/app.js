@@ -1,6 +1,5 @@
-const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-// The anon key is safe to expose only while the sales table has RLS enabled.
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://zvyddbyzsmhibwobsqah.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2eWRkYnl6c21oaWJ3b2JzcWFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NzA1MTAsImV4cCI6MjEwNzQ0NjUxMH0.hUrbXxz2VL_n4TrvOEK1In2AqmE1R0HzF0Fb_R3YOJs";
 const CURRENCY_SYMBOL = "₦";
 const MAX_AMOUNT_CENTS = 999_999_999_999n;
 
@@ -25,6 +24,12 @@ const amountError = document.querySelector("#amount-error");
 const timeError = document.querySelector("#time-error");
 const totalValue = document.querySelector("#total-value");
 const saleCount = document.querySelector("#sale-count");
+const totalHeading = document.querySelector("#total-heading");
+const ledgerHeading = document.querySelector("#ledger-heading");
+const dateInput = document.querySelector("#dashboard-date");
+const previousDayButton = document.querySelector("#previous-day");
+const nextDayButton = document.querySelector("#next-day");
+const copyTotalButton = document.querySelector("#copy-total");
 const tickerTrack = document.querySelector("#ticker-track");
 const stampLayer = document.querySelector("#stamp-layer");
 document.querySelectorAll("[data-currency]").forEach((element) => {
@@ -33,14 +38,47 @@ document.querySelectorAll("[data-currency]").forEach((element) => {
 
 let sales = [];
 let salesLoadState = "loading";
+let selectedDayKey = localDateKey(new Date());
+let salesLoadRequest = 0;
 let previousTotalCents = null;
 let newestSaleId = null;
 let newestSaleTimer;
 
-function localDayRange(date = new Date()) {
+function localDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dateFromLocalKey(dateKey) {
+  const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return localDateKey(date) === dateKey ? date : null;
+}
+
+function localDayRange(dateKey = selectedDayKey) {
+  const date = dateFromLocalKey(dateKey);
+  if (!date) return null;
   const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
   return { start: start.toISOString(), end: end.toISOString() };
+}
+
+function isViewingToday() {
+  return selectedDayKey === localDateKey(new Date());
+}
+
+function selectedDayLabel(options = { month: "short", day: "numeric", year: "numeric" }) {
+  return new Intl.DateTimeFormat("en-NG", options).format(dateFromLocalKey(selectedDayKey));
+}
+
+function updateDateControls() {
+  const today = localDateKey(new Date());
+  dateInput.value = selectedDayKey;
+  dateInput.max = today;
+  nextDayButton.disabled = selectedDayKey >= today;
 }
 
 function formatCents(cents) {
@@ -91,33 +129,39 @@ function escapeHtml(value) {
 
 function render() {
   const totalCents = sales.reduce((total, sale) => total + centsForSale(sale), 0n);
+  const newestFirst = [...sales].sort((left, right) =>
+    new Date(right.sold_at) - new Date(left.sold_at),
+  );
   const cumulativeById = new Map();
   let cumulativeCents = 0n;
 
-  for (const sale of [...sales].reverse()) {
+  for (const sale of [...newestFirst].reverse()) {
     cumulativeCents += centsForSale(sale);
     cumulativeById.set(sale.id, cumulativeCents);
   }
 
-  salesBody.innerHTML = sales.map((sale) => {
+  salesBody.innerHTML = newestFirst.map((sale) => {
     const soldAt = new Date(sale.sold_at);
     const time = new Intl.DateTimeFormat("en-NG", {
       hour: "numeric",
       minute: "2-digit",
     }).format(soldAt);
     const isNewest = sale.id === newestSaleId;
-    const isStamped = sale.id === newestSaleId;
-    return `<tr class="${isStamped ? "row-stamped" : ""}">
+    return `<tr class="${isNewest ? "row-stamped" : ""}">
       <td class="sale-time">${escapeHtml(time)}${isNewest ? '<span class="new-tag">NEW</span>' : ""}</td>
       <td class="sale-item">${escapeHtml(sale.item_name)}</td>
       <td class="money-cell">${formatMoney(centsForSale(sale))}</td>
       <td class="money-cell running-total">${formatMoney(cumulativeById.get(sale.id))}</td>
+      <td class="action-cell"><button class="delete-sale" type="button" data-sale-id="${escapeHtml(sale.id)}" aria-label="Delete ${escapeHtml(sale.item_name)} sale" title="Delete sale">×</button></td>
     </tr>`;
   }).join("");
 
   emptyState.hidden = sales.length > 0;
+  const dayLabel = selectedDayLabel();
+  totalHeading.textContent = isViewingToday() ? "SOLD TODAY" : `SOLD ${dayLabel.toUpperCase()}`;
+  ledgerHeading.textContent = isViewingToday() ? "Today's sales" : `Sales for ${dayLabel}`;
   emptyState.textContent = salesLoadState === "loading"
-    ? "Loading today's sales..."
+    ? `Loading sales for ${dayLabel}...`
     : salesLoadState === "error"
       ? "Sales unavailable. Check the connection."
       : "No sales yet. Go sell something.";
@@ -125,6 +169,34 @@ function render() {
   renderTicker(totalCents);
   animateTotal(totalCents);
   renderQuickAdd();
+}
+
+async function deleteSale(saleId) {
+  const sale = sales.find((entry) => entry.id === saleId);
+  if (!sale || !supabaseClient) return;
+
+  const confirmation = `Delete ${sale.item_name} sale for ${formatMoney(centsForSale(sale))}? This cannot be undone.`;
+  if (!window.confirm(confirmation)) return;
+
+  formMessage.classList.remove("message-error");
+  formMessage.textContent = "Deleting sale...";
+
+  const { data, error } = await supabaseClient
+    .from("sales")
+    .delete()
+    .eq("id", sale.id)
+    .select("id");
+
+  if (error || !data?.some((deletedSale) => deletedSale.id === sale.id)) {
+    setFailure("Sale was not deleted. Check your connection and try again.");
+    return;
+  }
+
+  sales = sales.filter((entry) => entry.id !== sale.id);
+  if (newestSaleId === sale.id) newestSaleId = null;
+  render();
+  formMessage.classList.remove("message-error");
+  formMessage.textContent = "Sale deleted. The selected day's total is updated.";
 }
 
 function animateTotal(targetCents) {
@@ -135,20 +207,36 @@ function animateTotal(targetCents) {
     const startedAt = performance.now();
     const duration = 600;
     totalValue.classList.remove("total-flash");
+    const tickerTotals = tickerTrack.querySelectorAll(".ticker-total");
+    const updateDisplayedTotal = (cents) => {
+      totalValue.textContent = formatCents(cents);
+      tickerTotals.forEach((tickerTotal) => {
+        tickerTotal.textContent = formatMoney(cents);
+      });
+    };
+    updateDisplayedTotal(from);
+
+    let animationFinished = false;
+    const finishAnimation = () => {
+      if (animationFinished) return;
+      animationFinished = true;
+      updateDisplayedTotal(targetCents);
+      totalValue.classList.add("total-flash");
+      window.setTimeout(() => totalValue.classList.remove("total-flash"), 250);
+    };
+    const finishFallback = window.setTimeout(finishAnimation, duration + 100);
 
     function tick(now) {
       const progress = Math.min((now - startedAt) / duration, 1);
       const eased = 1 - (1 - progress) ** 3;
       const progressUnits = BigInt(Math.round(eased * 1_000_000));
       const current = from + ((targetCents - from) * progressUnits) / 1_000_000n;
-      totalValue.textContent = formatCents(current);
-      const tickerTotal = tickerTrack.querySelector(".ticker-total");
-      if (tickerTotal) tickerTotal.textContent = formatMoney(current);
+      updateDisplayedTotal(current);
       if (progress < 1) {
         requestAnimationFrame(tick);
       } else {
-        totalValue.classList.add("total-flash");
-        window.setTimeout(() => totalValue.classList.remove("total-flash"), 250);
+        window.clearTimeout(finishFallback);
+        finishAnimation();
       }
     }
 
@@ -163,7 +251,8 @@ function renderTicker(totalCents) {
   const lastSale = latest
     ? `LAST SALE: ${escapeHtml(latest.item_name)} ${formatMoney(centsForSale(latest))}`
     : "NO SALES YET";
-  const message = `TODAY'S TOTAL <span class="ticker-total">${formatMoney(totalCents)}</span> ✦ ${sales.length} ${sales.length === 1 ? "SALE" : "SALES"} ✦ ${lastSale} ✦ KEEP SELLING ✦`;
+  const totalLabel = isViewingToday() ? "TODAY'S TOTAL" : `${selectedDayLabel().toUpperCase()} TOTAL`;
+  const message = `${totalLabel} <span class="ticker-total">${formatMoney(totalCents)}</span> ✦ ${sales.length} ${sales.length === 1 ? "SALE" : "SALES"} ✦ ${lastSale} ✦ KEEP SELLING ✦`;
   tickerTrack.innerHTML = [0, 1].map((copy) =>
     `<span class="ticker-copy"${copy ? ' aria-hidden="true"' : ""}>${message}</span>`,
   ).join("");
@@ -172,7 +261,9 @@ function renderTicker(totalCents) {
 function renderQuickAdd() {
   const recentNames = [];
   const seen = new Set();
-  for (const sale of sales) {
+  for (const sale of [...sales].sort((left, right) =>
+    new Date(right.sold_at) - new Date(left.sold_at),
+  )) {
     const key = sale.item_name.trim().toLocaleLowerCase();
     if (!seen.has(key)) {
       seen.add(key);
@@ -213,7 +304,8 @@ function playStamp() {
   }, 950);
 }
 
-async function loadToday() {
+async function loadSelectedDay() {
+  const requestId = ++salesLoadRequest;
   if (!supabaseClient) {
     salesLoadState = "error";
     render();
@@ -221,18 +313,20 @@ async function loadToday() {
     return;
   }
 
-  const { start, end } = localDayRange();
+  const dayRange = localDayRange();
+  if (!dayRange) return;
   const { data, error } = await supabaseClient
     .from("sales")
     .select("id, item_name, amount, sold_at")
-    .gte("sold_at", start)
-    .lt("sold_at", end)
+    .gte("sold_at", dayRange.start)
+    .lt("sold_at", dayRange.end)
     .order("sold_at", { ascending: false });
 
+  if (requestId !== salesLoadRequest) return;
   if (error) {
     salesLoadState = "error";
     render();
-    setFailure("Could not load today's sales. Check the Supabase settings and try again.");
+    setFailure(`Could not load sales for ${selectedDayLabel()}. Check the Supabase settings and try again.`);
     return;
   }
   salesLoadState = "ready";
@@ -241,11 +335,54 @@ async function loadToday() {
   render();
 }
 
+async function selectDashboardDay(dateKey) {
+  if (!dateFromLocalKey(dateKey) || dateKey > localDateKey(new Date())) {
+    updateDateControls();
+    return;
+  }
+
+  selectedDayKey = dateKey;
+  sales = [];
+  salesLoadState = "loading";
+  previousTotalCents = null;
+  newestSaleId = null;
+  window.clearTimeout(newestSaleTimer);
+  updateDateControls();
+  render();
+  await loadSelectedDay();
+}
+
+function shiftDashboardDay(offset) {
+  const date = dateFromLocalKey(selectedDayKey);
+  date.setDate(date.getDate() + offset);
+  return selectDashboardDay(localDateKey(date));
+}
+
+dateInput.addEventListener("change", () => selectDashboardDay(dateInput.value));
+previousDayButton.addEventListener("click", () => shiftDashboardDay(-1));
+nextDayButton.addEventListener("click", () => shiftDashboardDay(1));
+
 quickAdd.addEventListener("click", (event) => {
   const chip = event.target.closest("[data-item]");
   if (!chip) return;
   itemInput.value = chip.dataset.item;
   amountInput.focus();
+});
+
+salesBody.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest(".delete-sale");
+  if (deleteButton) deleteSale(deleteButton.dataset.saleId);
+});
+
+copyTotalButton.addEventListener("click", async () => {
+  const totalCents = sales.reduce((total, sale) => total + centsForSale(sale), 0n);
+  try {
+    await window.navigator.clipboard.writeText(formatMoney(totalCents));
+    formMessage.classList.remove("message-error");
+    formMessage.textContent = isViewingToday() ? "Today's total copied." : `Total for ${selectedDayLabel()} copied.`;
+  } catch {
+    setFailure("Could not copy the total. Select the amount to copy it manually.");
+  }
 });
 
 form.addEventListener("submit", async (event) => {
@@ -299,9 +436,11 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  const { start, end } = localDayRange();
+  const dayRange = localDayRange();
   const saleTime = new Date(data.sold_at).getTime();
-  if (saleTime >= new Date(start).getTime() && saleTime < new Date(end).getTime()) {
+  const saleMatchesSelectedDay = saleTime >= new Date(dayRange.start).getTime()
+    && saleTime < new Date(dayRange.end).getTime();
+  if (saleMatchesSelectedDay) {
     salesLoadState = "ready";
     sales = [data, ...sales.filter((sale) => sale.id !== data.id)].sort((left, right) =>
       new Date(right.sold_at) - new Date(left.sold_at),
@@ -318,29 +457,37 @@ form.addEventListener("submit", async (event) => {
   form.reset();
   timeInput.value = localDateTimeValue();
   formMessage.classList.remove("message-error");
-  formMessage.textContent = saleTime >= new Date(start).getTime() && saleTime < new Date(end).getTime()
+  formMessage.textContent = saleMatchesSelectedDay
     ? "Sale saved. Keep it moving."
-    : "Sale saved. It is outside today's log.";
+    : `Sale saved outside the ${isViewingToday() ? "today's" : "selected-day"} dashboard.`;
   itemInput.focus();
   playStamp();
 });
 
+dateInput.value = selectedDayKey;
+updateDateControls();
 timeInput.value = localDateTimeValue();
 render();
 itemInput.focus({ preventScroll: true });
-loadToday();
+loadSelectedDay();
 
 function scheduleMidnightRefresh() {
   const now = new Date();
+  const scheduledDayKey = localDateKey(now);
   const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   window.setTimeout(() => {
-    sales = [];
-    salesLoadState = "loading";
-    previousTotalCents = null;
-    newestSaleId = null;
-    timeInput.value = localDateTimeValue();
-    render();
-    loadToday();
+    updateDateControls();
+    if (selectedDayKey === scheduledDayKey) {
+      selectedDayKey = localDateKey(new Date());
+      sales = [];
+      salesLoadState = "loading";
+      previousTotalCents = null;
+      newestSaleId = null;
+      timeInput.value = localDateTimeValue();
+      updateDateControls();
+      render();
+      loadSelectedDay();
+    }
     scheduleMidnightRefresh();
   }, nextMidnight.getTime() - now.getTime() + 50);
 }
