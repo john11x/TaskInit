@@ -1,6 +1,6 @@
 # Daily Sales Log
 
-A small sales log for a shop counter. Record an item, amount, and sale time, then see the total and running balances for a selected local calendar day.
+A sales log for a shop counter. Record an item, amount, and sale time, then see the total and running balances for a selected local calendar day.
 
 ## Project structure
 
