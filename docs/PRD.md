@@ -1,4 +1,4 @@
-## 1. Overview
+## 1. Product Overview
 Daily Sales Log is a small browser app for shop owners to record sales and see the value sold for a selected day. It uses Supabase to store transactions and has no build step.
 
 ## 2. Problem and user
